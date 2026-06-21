@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+:root {
+  /* exam-paper ink palette */
+  --ink: #0b0d12;
+  --ink-raised: #12151c;
+  --ink-line: #1f242f;
+  --paper: #f5f2e8;
+  --paper-dim: #d9d4c4;
+  --red-pen: #e8542e;
+  --red-pen-dim: #4a2318;
+  --graphite: #7c8a99;
+  --verified: #2a8c6e;
+  --verified-dim: #102620;
+}
+
+@theme inline {
+  --color-ink: var(--ink);
+  --color-ink-raised: var(--ink-raised);
+  --color-ink-line: var(--ink-line);
+  --color-paper: var(--paper);
+  --color-paper-dim: var(--paper-dim);
+  --color-red-pen: var(--red-pen);
+  --color-red-pen-dim: var(--red-pen-dim);
+  --color-graphite: var(--graphite);
+  --color-verified: var(--verified);
+  --color-verified-dim: var(--verified-dim);
+  --font-serif: var(--font-source-serif);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-sans: var(--font-inter);
+}
+
+body {
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-inter), sans-serif;
+}
+
+/* ruled-paper background for the upload hero — subtle texture, not visible stripes */
+.ruled-paper {
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 31px,
+    rgba(245, 242, 232, 0.045) 31px,
+    rgba(245, 242, 232, 0.045) 32px
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
