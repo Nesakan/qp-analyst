@@ -1,10 +1,10 @@
-# SASTRA QP Analyst
+# QP Analyst
 
-An AI-powered tool that reads SASTRA University question papers (scanned or typed PDFs) and automatically breaks them down by unit, topic, marks, and question type — turning a raw PDF into a structured, searchable study dashboard.
+An AI-powered tool that reads University question papers (scanned or typed PDFs) and automatically breaks them down by unit, topic, marks, and question type — turning a raw PDF into a structured, searchable study dashboard.
 
 ## The problem
 
-Before an exam, students at SASTRA flip through years of old question papers trying to spot patterns: which units come up most, what kind of questions repeat, where the marks are concentrated. It's manual, slow, and easy to miss patterns that span multiple papers.
+Before an exam, students flip through years of old question papers trying to spot patterns: which units come up most, what kind of questions repeat, where the marks are concentrated. It's manual, slow, and easy to miss patterns that span multiple papers.
 
 ## What it does
 
