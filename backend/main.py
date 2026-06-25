@@ -18,6 +18,7 @@ less-certain feature (diagram cropping).
 """
 
 import os
+import re
 import logging
 from dotenv import load_dotenv
 
@@ -34,31 +35,67 @@ from diagram_extractor import extract_diagrams
 import database
 from models import Paper, PaperSummary, AskRequest, AskResponse
 
-app = FastAPI(title="QP Analyst API")
+# ---------------------------------------------------------------------------
+# Security: disable interactive API docs in production
+# ---------------------------------------------------------------------------
+IS_PRODUCTION = os.environ.get("ENVIRONMENT", "development") == "production"
 
+app = FastAPI(
+    title="QP Analyst API",
+    docs_url=None if IS_PRODUCTION else "/docs",
+    redoc_url=None if IS_PRODUCTION else "/redoc",
+)
+
+# ---------------------------------------------------------------------------
+# Security: CORS — restrict origins, methods, and headers
+# ---------------------------------------------------------------------------
 origins = os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type", "Accept"],
 )
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+MAX_UPLOAD_BYTES = 20 * 1024 * 1024  # 20 MB
+PDF_MAGIC_BYTES = b"%PDF"
+
+
+def _sanitize_filename(raw: str) -> str:
+    """Strip path separators and cap length to prevent path traversal or storage issues."""
+    name = os.path.basename(raw)
+    name = re.sub(r'[<>:"/\\|?*]', "_", name)
+    return name[:200] if name else "unnamed.pdf"
 
 
 @app.post("/papers/upload")
 async def upload_paper(file: UploadFile = File(...)):
-    if not file.filename.lower().endswith(".pdf"):
+    if not file.filename or not file.filename.lower().endswith(".pdf"):
         raise HTTPException(400, "Only PDF files are supported.")
 
+    # Security: enforce file size limit before reading the full body
     pdf_bytes = await file.read()
+    if len(pdf_bytes) > MAX_UPLOAD_BYTES:
+        raise HTTPException(413, "File too large. Maximum size is 20 MB.")
+
+    # Security: verify the file is actually a PDF (magic bytes check)
+    if not pdf_bytes[:4].startswith(PDF_MAGIC_BYTES):
+        raise HTTPException(400, "File does not appear to be a valid PDF.")
+
+    safe_filename = _sanitize_filename(file.filename)
 
     try:
         extraction = classify_paper(pdf_bytes)
     except Exception as e:
-        raise HTTPException(502, f"AI extraction failed: {e}")
+        # Security: log full error server-side, return generic message to client
+        logger.error(f"AI extraction failed for '{safe_filename}': {e}", exc_info=True)
+        raise HTTPException(502, "AI extraction failed. Please try again or use a different file.")
 
     paper_id, question_ids = database.save_paper_extraction(
-        file.filename, extraction.transcribed_text, extraction
+        safe_filename, extraction.transcribed_text, extraction
     )
 
     diagram_question_numbers = {
